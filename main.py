@@ -125,7 +125,7 @@ class Main():
         Const.set_all(self.config)
         log_path = os.path.join(os.path.dirname(__file__),self.config["LOG"]["FILE_PATH"])
         # ログクラスの設定
-        self.log = common.Log(log_path,logging.DEBUG)
+        self.log = common.Log(log_path,logging.INFO)
         self.logger = self.log.logger
         # SqliteDBクラスの設定
         self.db = DbSqlite(self.config["DATABASE"]["DATABASE"],self.log)
@@ -165,6 +165,9 @@ class Main():
 
             # フォルダを繰り返す
             for file in os.listdir(Const.INPUT):
+                if "input" == file:
+                    continue
+                self.logger.info(file)
                 file_without_ext_list = os.path.splitext(file)[0].split("_")
 
                 # 都道府県
