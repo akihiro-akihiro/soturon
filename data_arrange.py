@@ -105,6 +105,7 @@ class Main():
                 # 移動元フルパス
                 file_from = os.path.join(Const.INPUT,file)
                 if file not in Const.FILE_TYPE.keys():
+                    os.remove(file_from)
                     continue
                 # ファイル種別
                 file_type = Const.FILE_TYPE[file]
