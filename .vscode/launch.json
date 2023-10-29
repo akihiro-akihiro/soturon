@@ -10,11 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "青森県",
-                "青森市"
-            ]
+            "justMyCode": true
         }
     ]
 }

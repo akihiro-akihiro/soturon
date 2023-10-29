@@ -9,6 +9,7 @@ import os
 import sys
 import traceback
 import logging
+import shutil
 import common
 
 # 設定ファイルパス
@@ -46,6 +47,10 @@ class Const:
         "D09-1_（D09ファイルに読み込まれるデータ）.xlsx": "医療・福祉",
         "D10-1_（D10ファイルに読み込まれるデータ）.xlsx": "地方財政",
     }
+
+    PREFECTURE_LIST = [
+        "北海道",
+    ]
 
     @classmethod
     def set_all(cls,config) -> None:
@@ -90,28 +95,49 @@ class Main():
             # 開始ログ出力
             self.log.info_start()
 
-            # 引数
-            if 3 != len(sys.argv):
-                raise CommonException("引数が異なります。")
-
-            # 都道府県
-            pref = sys.argv[1]
-            # 都市
-            city = sys.argv[2]
-
             # ディレクトリ一覧
             files = os.listdir(Const.INPUT)
             for file in files:
-                # 移動元フルパス
-                file_from = os.path.join(Const.INPUT,file)
-                if file not in Const.FILE_TYPE.keys():
-                    os.remove(file_from)
-                    continue
-                # ファイル種別
-                file_type = Const.FILE_TYPE[file]
-                # 移動先フルパス
-                file_to = os.path.join(Const.OUTPUT,f"{pref}_{city}_{file_type}.xlsx")
-                os.rename(file_from,file_to)
+                # zipファイル
+                zip_file = os.path.join(Const.INPUT,file)
+                # 解凍フォルダ
+                unpack_folder = os.path.join(Const.INPUT,os.path.splitext(file)[0])
+                shutil.unpack_archive(zip_file,unpack_folder)
+                
+                # 都道府県
+                prefecture = None
+                # 都市
+                city = None
+
+                # ディレクトリ一覧 都道府県と都市の特定
+                unpack_folder_files = os.listdir(unpack_folder)
+                for unpack_folder_file in unpack_folder_files:
+                    if unpack_folder_file.startswith("A01_総論①人口_"):
+                        pref_and_city = os.path.splitext(unpack_folder_file)[0].lstrip("A01_総論①人口_")
+                        for pref in Const.PREFECTURE_LIST:
+                            if pref in pref_and_city:
+                                prefecture = pref
+                                city = pref_and_city.lstrip(prefecture)
+                                break
+                        break
+
+                if None is prefecture:
+                    raise CommonException("都道府県が見つかりません")
+
+                for unpack_folder_file in unpack_folder_files:
+                    # 移動元フルパス
+                    file_from = os.path.join(unpack_folder,unpack_folder_file)
+                    if unpack_folder_file not in Const.FILE_TYPE.keys():
+                        os.remove(file_from)
+                        continue
+                    # ファイル種別
+                    file_type = Const.FILE_TYPE[unpack_folder_file]
+                    # 移動先フルパス
+                    file_to = os.path.join(Const.OUTPUT,f"{prefecture}_{city}_{file_type}.xlsx")
+                    os.rename(file_from,file_to)
+
+                # os.remove(unpack_folder)
+                # os.remove(zip_file)
             
         except CommonException as e:
             self.logger.error(str(e))
