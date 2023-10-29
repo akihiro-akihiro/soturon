@@ -9,7 +9,6 @@ import os
 import sys
 import traceback
 import logging
-import pandas as pd
 import common
 
 # 設定ファイルパス
@@ -39,13 +38,13 @@ class Const:
         "D01-1_（D01ファイルに読み込まれるデータ）.xlsx": "人口増減",
         "D02-1_（D02ファイルに読み込まれるデータ）.xlsx": "製造業",
         "D03-1_（D03ファイルに読み込まれるデータ）.xlsx": "小売業",
-        "D04-1_（D03ファイルに読み込まれるデータ）.xlsx": "農業",
-        "D05-1_（D03ファイルに読み込まれるデータ）.xlsx": "林業",
-        "D06-1_（D03ファイルに読み込まれるデータ）.xlsx": "水産業",
-        "D07-1_（D03ファイルに読み込まれるデータ）.xlsx": "観光",
-        "D08-1_（D03ファイルに読み込まれるデータ）.xlsx": "雇用",
-        "D09-1_（D03ファイルに読み込まれるデータ）.xlsx": "医療・福祉",
-        "D10-1_（D03ファイルに読み込まれるデータ）.xlsx": "地方財政",
+        "D04-1_（D04ファイルに読み込まれるデータ）.xlsx": "農業",
+        "D05-1_（D05ファイルに読み込まれるデータ）.xlsx": "林業",
+        "D06-1_（D06ファイルに読み込まれるデータ）.xlsx": "水産業",
+        "D07-1_（D07ファイルに読み込まれるデータ）.xlsx": "観光",
+        "D08-1_（D08ファイルに読み込まれるデータ）.xlsx": "雇用",
+        "D09-1_（D09ファイルに読み込まれるデータ）.xlsx": "医療・福祉",
+        "D10-1_（D10ファイルに読み込まれるデータ）.xlsx": "地方財政",
     }
 
     @classmethod
@@ -120,8 +119,6 @@ class Main():
             self.logger.error(traceback.format_exc())
             self.logger.error(Const.LOG_STR_UNEXPECTED_ERROR)
         finally:
-            # DBインスタンスの破棄
-            del self.db
             # 終了ログ出力
             self.log.info_end()
 
