@@ -78,15 +78,6 @@ class Main():
         self.logger = self.log.logger
         # SqliteDBクラスの設定
         self.db = DbSqlite(self.config["DATABASE"]["DATABASE"],self.log)
-        # メールクラスの設定
-        self.mail = common.Mail(
-            self.config["MAIL"]["SERVER"],
-            self.config["MAIL"]["PORT"],
-            self.config["MAIL"]["USER"],
-            self.config["MAIL"]["PASSWORD"],
-            self.config["MAIL"]["DISPLAY_NAME"],
-            self.log
-        )
 
     def main(self) -> None:
         """
