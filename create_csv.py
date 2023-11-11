@@ -10,6 +10,7 @@ import traceback
 import logging
 import requests
 import json
+import tqdm
 import pandas as pd
 import common
 
@@ -32,7 +33,7 @@ class Const:
     LOG_STR_UNEXPECTED_ERROR = "意図しない例外が発生しました。システム担当者に問い合わせてください。"
 
     # ヘッダ
-    HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
+    HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
 
     @classmethod
     def set_all(cls,config) -> None:
@@ -64,6 +65,12 @@ class Main():
         # ログクラスの設定
         self.log = common.Log(log_path,logging.INFO)
         self.logger = self.log.logger
+
+    def zero_to_one(self,value) -> int:
+        """
+        0のデータを1にする
+        """
+        return 1 if 0 == value else value
 
     def get_prefectures(self) -> list:
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/prefectures",headers=Const.HEADER)
@@ -161,6 +168,76 @@ class Main():
                 break
 
         return population_2020, young_population_2020, adult_population_2020, old_population_2020
+    
+    def get_population_estimate(self,pref_code,city_code) -> tuple:
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/population/sum/estimate?prefCode={pref_code}&cityCode={city_code}".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        # 2020年
+        # 出生数
+        birth = None
+        # 死亡数
+        death = None
+        # 転入数
+        transfer_in = None
+        # 転出数
+        transfer_out = None
+
+        # 2015～2020年 増加率
+        # 出生数
+        birth_increase_rate = None
+        # 死亡数
+        death_increase_rate = None
+        # 転入数
+        transfer_in_increase_rate = None
+        # 転出数
+        transfer_out_increase_rate = None
+
+        if None == result_dict["result"]:
+            return birth, death, transfer_in, transfer_out, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate
+
+        data_list = result_dict["result"]["data"]
+        for data in data_list:
+            if "転入数" == data["label"]:
+                transfer_in_2015 = None
+                for t in data["data"]:
+                    if 2015 == t["year"]:
+                        transfer_in_2015 = t["value"]
+                    elif 2020 == t["year"]:
+                        transfer_in = t["value"]
+                        transfer_in_increase_rate = transfer_in / self.zero_to_one(transfer_in_2015)
+                        break
+            if "転出数" == data["label"]:
+                transfer_out_2015 = None
+                for t in data["data"]:
+                    if 2015 == t["year"]:
+                        transfer_out_2015 = t["value"]
+                    elif 2020 == t["year"]:
+                        transfer_out = t["value"]
+                        transfer_out_increase_rate = transfer_out / self.zero_to_one(transfer_out_2015)
+                        break
+            if "出生数" == data["label"]:
+                birth_2015 = None
+                for t in data["data"]:
+                    if 2015 == t["year"]:
+                        birth_2015 = t["value"]
+                    elif 2020 == t["year"]:
+                        birth = t["value"]
+                        birth_increase_rate = birth / self.zero_to_one(birth_2015)
+                        break
+            if "死亡数" == data["label"]:
+                death_2015 = None
+                for t in data["data"]:
+                    if 2015 == t["year"]:
+                        death_2015 = t["value"]
+                    elif 2020 == t["year"]:
+                        death = t["value"]
+                        death_increase_rate = death / self.zero_to_one(death_2015)
+                        break
+
+        return birth, death, transfer_in, transfer_out, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate
 
     def main(self) -> None:
         """
@@ -177,10 +254,10 @@ class Main():
 
             # 都道府県の取得
             prefectures = self.get_prefectures()
-            for prefecture in prefectures:
+            for prefecture in tqdm.tqdm(prefectures):
                 # 都市の取得
                 cities =  self.get_cities(prefecture["prefCode"])
-                for city in cities:
+                for city in tqdm.tqdm(cities):
 
                     if "1" == city["bigCityFlag"]:
                         # bigCityFlag = 1 なら除く
@@ -198,7 +275,7 @@ class Main():
                     ))
                     population_2020, young_population_2020, adult_population_2020, old_population_2020 = self.get_population(prefecture["prefCode"], city["cityCode"])
                     if None == population_2020 or None == young_population_2020 or None == adult_population_2020 or None == old_population_2020:
-                        self.logger.warning("人口のデータが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
                             pref_code = prefecture["prefCode"],
                             city_code = city["cityCode"]
                         ))
@@ -215,7 +292,7 @@ class Main():
                     ))
                     population_2020, young_population_2020, adult_population_2020, old_population_2020 = self.get_population_change(prefecture["prefCode"], city["cityCode"])
                     if None == population_2020 or None == young_population_2020 or None == adult_population_2020 or None == old_population_2020:
-                        self.logger.warning("人口のデータが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
                             pref_code = prefecture["prefCode"],
                             city_code = city["cityCode"]
                         ))
@@ -224,6 +301,29 @@ class Main():
                     data_dict["年少人口増加率"] = young_population_2020
                     data_dict["生産年齢人口増加率"] = adult_population_2020
                     data_dict["老年人口増加率"] = old_population_2020
+
+                    # 出生数／死亡数／転入数／転出数
+                    self.logger.info("出生数／死亡数／転入数／転出数の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    birth, death, transfer_in, transfer_out, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate =\
+                        self.get_population_estimate(prefecture["prefCode"], city["cityCode"])
+                    if None == birth or None == death or None == transfer_in or None == transfer_out or\
+                        None == birth_increase_rate or None == death_increase_rate or None == transfer_in_increase_rate or None == transfer_out_increase_rate:
+                        self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                            pref_code = prefecture["prefCode"],
+                            city_code = city["cityCode"]
+                        ))
+                        continue
+                    data_dict["出生数"] = birth
+                    data_dict["死亡数"] = death
+                    data_dict["転入数"] = transfer_in
+                    data_dict["転出数"] = transfer_out
+                    data_dict["出生数増加率"] = birth_increase_rate
+                    data_dict["死亡数増加率"] = death_increase_rate
+                    data_dict["転入数増加率"] = transfer_in_increase_rate
+                    data_dict["転出数増加率"] = transfer_out_increase_rate
                     
                     self.logger.info(data_dict)
                     data_list.append(data_dict)
