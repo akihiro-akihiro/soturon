@@ -13,6 +13,7 @@ import json
 import tqdm
 import pandas as pd
 import common
+import time
 
 # 設定ファイルパス
 CONFIG = "create_csv.ini"
@@ -33,7 +34,8 @@ class Const:
     LOG_STR_UNEXPECTED_ERROR = "意図しない例外が発生しました。システム担当者に問い合わせてください。"
 
     # ヘッダ
-    HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
+    # HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
+    HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
 
     @classmethod
     def set_all(cls,config) -> None:
@@ -63,7 +65,7 @@ class Main():
         Const.set_all(self.config)
         log_path = os.path.join(os.path.dirname(__file__),self.config["LOG"]["FILE_PATH"])
         # ログクラスの設定
-        self.log = common.Log(log_path,logging.INFO)
+        self.log = common.Log(log_path,logging.DEBUG)
         self.logger = self.log.logger
 
     def zero_to_one(self,value) -> int:
@@ -88,6 +90,8 @@ class Main():
             city_code = city_code
         ),headers=Const.HEADER)
         result_dict = json.loads(response.content.decode())
+        # 人口2015
+        population_2015 = None
         # 人口2020
         population_2020 = None
         # 年少人口
@@ -98,13 +102,15 @@ class Main():
         old_population_2020 = None
 
         if None == result_dict["result"]:
-            return population_2020, young_population_2020, adult_population_2020, old_population_2020
+            return population_2015, population_2020, young_population_2020, adult_population_2020, old_population_2020
 
         # データ
         data_list = result_dict["result"]["data"]
         for data in data_list:
             if "総人口" == data["label"]:
                 for population in data["data"]:
+                    if 2015 == population["year"]:
+                        population_2015 = population["value"]
                     if 2020 == population["year"]:
                         population_2020 = population["value"]
                         break
@@ -125,7 +131,7 @@ class Main():
                         break
                 break
 
-        return population_2020, young_population_2020, adult_population_2020, old_population_2020
+        return population_2015, population_2020, young_population_2020, adult_population_2020, old_population_2020
     
     def get_population_change(self,pref_code,city_code) -> tuple:
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/population/sum/perYear?prefCode={pref_code}&cityCode={city_code}".format(
@@ -239,6 +245,199 @@ class Main():
 
         return birth, death, transfer_in, transfer_out, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate
 
+    def get_employ_education(self,pref_code) -> dict:
+        def get_2020(result_dict):
+            return next((y["value"] for y in result_dict["result"]["changes"][0]["data"] if 2000 == y["year"]), None)
+        data_dict ={}
+        # 実数
+        # 地元就職
+        # 進学
+        # すべての進学
+        # 男性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=0&classification=1&displayType=10&gender=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["地元進学男性"] = get_2020(result_dict)
+        # 実数
+        # 地元就職
+        # 進学
+        # すべての進学
+        # 女性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=0&classification=1&displayType=10&gender=2".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["地元進学女性"] = get_2020(result_dict)
+        # 実数
+        # 地元就職
+        # 就職
+        # 就職
+        # 男性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=0&classification=2&displayType=20&gender=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["地元就職男性"] = get_2020(result_dict)
+        # 実数
+        # 地元就職
+        # 就職
+        # 就職
+        # 女性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=0&classification=2&displayType=20&gender=2".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["地元就職女性"] = get_2020(result_dict)
+        # 実数
+        # 流出
+        # 進学
+        # すべての進学
+        # 男性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=1&classification=1&displayType=10&gender=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["流出進学男性"] = get_2020(result_dict)
+        # 実数
+        # 流出
+        # 進学
+        # すべての進学
+        # 女性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=1&classification=1&displayType=10&gender=2".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["流出進学女性"] = get_2020(result_dict)
+        # 実数
+        # 流出
+        # 就職
+        # 就職
+        # 男性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=1&classification=2&displayType=20&gender=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["流出就職男性"] = get_2020(result_dict)
+        # 実数
+        # 流出
+        # 就職
+        # 就職
+        # 女性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=1&classification=2&displayType=20&gender=2".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["流出就職女性"] = get_2020(result_dict)
+        # 実数
+        # 流入
+        # 進学
+        # すべての進学
+        # 男性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=2&classification=1&displayType=10&gender=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["流入進学男性"] = get_2020(result_dict)
+        # 実数
+        # 流入
+        # 進学
+        # すべての進学
+        # 女性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=2&classification=1&displayType=10&gender=2".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["流入進学女性"] = get_2020(result_dict)
+        # 実数
+        # 流入
+        # 就職
+        # 就職
+        # 男性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=2&classification=2&displayType=20&gender=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["流入就職男性"] = get_2020(result_dict)
+        # 実数
+        # 流入
+        # 就職
+        # 就職
+        # 女性
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=2&classification=2&displayType=20&gender=2".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        data_dict["流入就職女性"] = get_2020(result_dict)
+        return data_dict
+    
+    def get_town_planning(self,pref_code,city_code) -> dict:
+        def get_value(result_dict):
+            try:
+                return result_dict["result"]["years"][0]["value"]
+            except:
+                return None
+        data_dict = {}
+        # 土地(住宅地)
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/townPlanning/estateTransaction/bar?year=2020&prefCode={pref_code}&cityCode={city_code}&displayType=1".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["不動産取引価格_土地(住宅地)"] = get_value(result_dict)
+        # 土地(商業地)
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/townPlanning/estateTransaction/bar?year=2020&prefCode={pref_code}&cityCode={city_code}&displayType=2".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["不動産取引価格_土地(商業地)"] = get_value(result_dict)
+        # 中古マンション等
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/townPlanning/estateTransaction/bar?year=2020&prefCode={pref_code}&cityCode={city_code}&displayType=3".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["不動産取引価格_中古マンション等"] = get_value(result_dict)
+        # 農地
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/townPlanning/estateTransaction/bar?year=2020&prefCode={pref_code}&cityCode={city_code}&displayType=4".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["不動産取引価格_農地"] = get_value(result_dict)
+        # 林地
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/townPlanning/estateTransaction/bar?year=2020&prefCode={pref_code}&cityCode={city_code}&displayType=5".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["不動産取引価格_林地"] = get_value(result_dict)
+        return data_dict
+    
+    def get_regional_employ(self,pref_code) -> dict:
+        def get_value(result_dict):
+            try:
+                return result_dict["result"]["allcount"]
+            except:
+                return None
+        data_dict = {}
+        # 有効求職者数（男性）
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/regionalEmploy/analysis/portfolio?year=2020&prefCode={pref_code}&matter=2&class=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["有効求職者数（男性）"] = get_value(result_dict)
+        # 有効求職者数（女性）
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/regionalEmploy/analysis/portfolio?year=2020&prefCode={pref_code}&matter=3&class=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["有効求職者数（女性）"] = get_value(result_dict)
+        # 有効求人数
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/regionalEmploy/analysis/portfolio?year=2020&prefCode={pref_code}&matter=4&class=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["有効求人数"] = get_value(result_dict)
+        # 就職件数
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/regionalEmploy/analysis/portfolio?year=2020&prefCode={pref_code}&matter=5&class=1".format(
+            pref_code = pref_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["就職件数"] = get_value(result_dict)
+        return data_dict
+
     def main(self) -> None:
         """
         メイン処理
@@ -273,17 +472,20 @@ class Main():
                         pref_code = prefecture["prefCode"],
                         city_code = city["cityCode"]
                     ))
-                    population_2020, young_population_2020, adult_population_2020, old_population_2020 = self.get_population(prefecture["prefCode"], city["cityCode"])
-                    if None == population_2020 or None == young_population_2020 or None == adult_population_2020 or None == old_population_2020:
+                    population_2015, population_2020, young_population_2020, adult_population_2020, old_population_2020 = self.get_population(prefecture["prefCode"], city["cityCode"])
+                    if None == population_2015 or None == population_2020 or None == young_population_2020 or None == adult_population_2020 or None == old_population_2020:
                         self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
                             pref_code = prefecture["prefCode"],
                             city_code = city["cityCode"]
                         ))
                         continue
-                    data_dict["人口"] = population_2020
+                    data_dict["人口2015"] = population_2015
+                    data_dict["人口2020"] = population_2020
                     data_dict["年少人口"] = young_population_2020
                     data_dict["生産年齢人口"] = adult_population_2020
                     data_dict["老年人口"] = old_population_2020
+
+                    # time.sleep(0.2)
 
                     # 人口増減率の取得
                     self.logger.info("人口増減率の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
@@ -301,6 +503,8 @@ class Main():
                     data_dict["年少人口増加率"] = young_population_2020
                     data_dict["生産年齢人口増加率"] = adult_population_2020
                     data_dict["老年人口増加率"] = old_population_2020
+
+                    # time.sleep(0.2)
 
                     # 出生数／死亡数／転入数／転出数
                     self.logger.info("出生数／死亡数／転入数／転出数の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
@@ -324,6 +528,56 @@ class Main():
                     data_dict["死亡数増加率"] = death_increase_rate
                     data_dict["転入数増加率"] = transfer_in_increase_rate
                     data_dict["転出数増加率"] = transfer_out_increase_rate
+
+                    # time.sleep(0.2)
+
+                    # 就職者数・進学者数の推移
+                    self.logger.info("就職者数・進学者数の推移の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    data_dict_temp = self.get_employ_education(prefecture["prefCode"])
+                    if None is not next((key for key, value in data_dict_temp.items() if None == value), None):
+                        self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                            pref_code = prefecture["prefCode"],
+                            city_code = city["cityCode"]
+                        ))
+                        continue
+                    data_dict.update(data_dict_temp)
+
+                    # time.sleep(0.2)
+
+                    # # 不動産取引価格
+                    # self.logger.info("不動産取引価格の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                    #     pref_code = prefecture["prefCode"],
+                    #     city_code = city["cityCode"]
+                    # ))
+                    # data_dict_temp = self.get_town_planning(prefecture["prefCode"], city["cityCode"])
+                    # if None is not next((key for key, value in data_dict_temp.items() if None == value), None):
+                    #     self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                    #         pref_code = prefecture["prefCode"],
+                    #         city_code = city["cityCode"]
+                    #     ))
+                    #     continue
+                    # data_dict.update(data_dict_temp)
+
+                    # time.sleep(0.2)
+
+                    # 求人・求職者
+                    self.logger.info("求人・求職者の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    data_dict_temp = self.get_regional_employ(prefecture["prefCode"])
+                    if None is not next((key for key, value in data_dict_temp.items() if None == value), None):
+                        self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                            pref_code = prefecture["prefCode"],
+                            city_code = city["cityCode"]
+                        ))
+                        continue
+                    data_dict.update(data_dict_temp)
+
+                    # time.sleep(0.2)
                     
                     self.logger.info(data_dict)
                     data_list.append(data_dict)
