@@ -34,8 +34,8 @@ class Const:
     LOG_STR_UNEXPECTED_ERROR = "意図しない例外が発生しました。システム担当者に問い合わせてください。"
 
     # ヘッダ
-    # HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
-    HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
+    HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
+    # HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
 
     @classmethod
     def set_all(cls,config) -> None:
@@ -454,6 +454,9 @@ class Main():
             # 都道府県の取得
             prefectures = self.get_prefectures()
             for prefecture in tqdm.tqdm(prefectures):
+                # スキップ
+                if int(prefecture["prefCode"]) < 20:
+                    continue
                 # 都市の取得
                 cities =  self.get_cities(prefecture["prefCode"])
                 for city in tqdm.tqdm(cities):
@@ -582,18 +585,16 @@ class Main():
                     self.logger.info(data_dict)
                     data_list.append(data_dict)
 
-            # pandas
-            df = pd.DataFrame(data_list)
-
-            # 保存
-            df.to_csv(os.path.join(os.path.dirname(__file__),self.config["CONST"]["CSV"]))
-            
         except CommonException as e:
             self.logger.error(str(e))
         except Exception:
             self.logger.error(traceback.format_exc())
             self.logger.error(Const.LOG_STR_UNEXPECTED_ERROR)
         finally:
+            # pandas
+            df = pd.DataFrame(data_list)
+            # 保存
+            df.to_csv(os.path.join(os.path.dirname(__file__),self.config["CONST"]["CSV"]))
             # 終了ログ出力
             self.log.info_end()
 
