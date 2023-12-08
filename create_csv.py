@@ -455,7 +455,7 @@ class Main():
             prefectures = self.get_prefectures()
             for prefecture in tqdm.tqdm(prefectures):
                 # スキップ
-                if int(prefecture["prefCode"]) < 20:
+                if int(prefecture["prefCode"]) < 22:
                     continue
                 # 都市の取得
                 cities =  self.get_cities(prefecture["prefCode"])
