@@ -280,6 +280,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=0&classification=2&displayType=20&gender=1".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["地元就職男性"] = get_2020(result_dict)
         # 実数
         # 地元就職
@@ -289,6 +290,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=0&classification=2&displayType=20&gender=2".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["地元就職女性"] = get_2020(result_dict)
         # 実数
         # 流出
@@ -298,6 +300,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=1&classification=1&displayType=10&gender=1".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["流出進学男性"] = get_2020(result_dict)
         # 実数
         # 流出
@@ -307,6 +310,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=1&classification=1&displayType=10&gender=2".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["流出進学女性"] = get_2020(result_dict)
         # 実数
         # 流出
@@ -316,6 +320,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=1&classification=2&displayType=20&gender=1".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["流出就職男性"] = get_2020(result_dict)
         # 実数
         # 流出
@@ -325,6 +330,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=1&classification=2&displayType=20&gender=2".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["流出就職女性"] = get_2020(result_dict)
         # 実数
         # 流入
@@ -334,6 +340,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=2&classification=1&displayType=10&gender=1".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["流入進学男性"] = get_2020(result_dict)
         # 実数
         # 流入
@@ -343,6 +350,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=2&classification=1&displayType=10&gender=2".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["流入進学女性"] = get_2020(result_dict)
         # 実数
         # 流入
@@ -352,6 +360,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=2&classification=2&displayType=20&gender=1".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["流入就職男性"] = get_2020(result_dict)
         # 実数
         # 流入
@@ -361,6 +370,7 @@ class Main():
         response = requests.get("https://opendata.resas-portal.go.jp/api/v1/employEducation/localjobAcademic/toTransition?prefecture_cd={pref_code}&displayMethod=0&matter=2&classification=2&displayType=20&gender=2".format(
             pref_code = pref_code
         ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
         data_dict["流入就職女性"] = get_2020(result_dict)
         return data_dict
     
