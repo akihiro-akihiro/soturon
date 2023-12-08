@@ -34,8 +34,11 @@ class Const:
     LOG_STR_UNEXPECTED_ERROR = "意図しない例外が発生しました。システム担当者に問い合わせてください。"
 
     # ヘッダ
-    HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
-    # HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
+    # HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
+    HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
+    # HEADER = {"X-API-KEY": iGv1mZo4iikWm0A7bYDMafGlADPoGHDZ5u6Z4a27"}
+    # HEADER = {"X-API-KEY": wv7DSpxzpObcBXH6TDslGRjzWPHFn3V3xGNR4ZHX"}
+    # HEADER = {"X-API-KEY": ELpUGSVz7Jobd3KE6Lu6t0cuYoitzjXrwQo81JYh"}
 
     @classmethod
     def set_all(cls,config) -> None:
@@ -455,8 +458,14 @@ class Main():
             prefectures = self.get_prefectures()
             for prefecture in tqdm.tqdm(prefectures):
                 # スキップ
-                if int(prefecture["prefCode"]) < 22:
+                if int(prefecture["prefCode"]) < 40:
                     continue
+
+                # 都道府県処理済フラグ
+                pref_processed_flg = False
+                employ_education = None
+                regional_employ = None
+
                 # 都市の取得
                 cities =  self.get_cities(prefecture["prefCode"])
                 for city in tqdm.tqdm(cities):
@@ -539,14 +548,15 @@ class Main():
                         pref_code = prefecture["prefCode"],
                         city_code = city["cityCode"]
                     ))
-                    data_dict_temp = self.get_employ_education(prefecture["prefCode"])
-                    if None is not next((key for key, value in data_dict_temp.items() if None == value), None):
-                        self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
-                            pref_code = prefecture["prefCode"],
-                            city_code = city["cityCode"]
-                        ))
-                        continue
-                    data_dict.update(data_dict_temp)
+                    if False == pref_processed_flg:
+                        employ_education = self.get_employ_education(prefecture["prefCode"])
+                        if None is not next((key for key, value in employ_education.items() if None == value), None):
+                            self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                                pref_code = prefecture["prefCode"],
+                                city_code = city["cityCode"]
+                            ))
+                            continue
+                    data_dict.update(employ_education)
 
                     # time.sleep(0.2)
 
@@ -571,19 +581,22 @@ class Main():
                         pref_code = prefecture["prefCode"],
                         city_code = city["cityCode"]
                     ))
-                    data_dict_temp = self.get_regional_employ(prefecture["prefCode"])
-                    if None is not next((key for key, value in data_dict_temp.items() if None == value), None):
-                        self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
-                            pref_code = prefecture["prefCode"],
-                            city_code = city["cityCode"]
-                        ))
-                        continue
-                    data_dict.update(data_dict_temp)
+                    if False == pref_processed_flg:
+                        regional_employ = self.get_regional_employ(prefecture["prefCode"])
+                        if None is not next((key for key, value in regional_employ.items() if None == value), None):
+                            self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                                pref_code = prefecture["prefCode"],
+                                city_code = city["cityCode"]
+                            ))
+                            continue
+                    data_dict.update(regional_employ)
 
                     # time.sleep(0.2)
                     
                     self.logger.info(data_dict)
                     data_list.append(data_dict)
+
+                    pref_processed_flg = True
 
         except CommonException as e:
             self.logger.error(str(e))
