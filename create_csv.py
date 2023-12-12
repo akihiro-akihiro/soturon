@@ -450,6 +450,124 @@ class Main():
         result_dict = json.loads(response.content.decode())
         data_dict["就職件数"] = get_value(result_dict)
         return data_dict
+    
+    def get_industry_power(self,pref_code,city_code) -> dict:
+        data_dict = {}
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/industry/power/forIndustry?year=2016&prefCode={pref_code}&cityCode={city_code}&sicCode-".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        for data in result_dict["result"]["data"]:
+            key = "産業別特化係数_" + data["simcName"]
+            key1 = key + "_付加価値額"
+            key2 = key + "_従業者数"
+            key3 = key + "_労働生産性"
+            data_dict[key1] = data["value"]
+            data_dict[key2] = data["employee"]
+            data_dict[key3] = data["labor"]
+        return data_dict
+    
+    def get_municipality(self,pref_code,city_code) -> dict:
+        data_dict = {}
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/municipality/foundation/perYear?prefCode={pref_code}&cityCode={city_code}".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        for data in result_dict["result"]["data"]:
+            key = "創業比率_" + data["year"]
+            data_dict[key] = data["value"]
+        return data_dict
+    
+    def get_municipality_surplus(self,pref_code,city_code) -> dict:
+        data_dict = {}
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/municipality/surplus/perYear?year=2016&prefCode={pref_code}&cityCode={city_code}&sicCode=-&simcCode=-".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        for data in result_dict["result"]["data"]:
+            if "surplus" == data["name"]:
+                data_dict["黒字赤字企業比率_黒字"] = data["years"][0]["value"]
+            elif "deficit" == data["name"]:
+                data_dict["黒字赤字企業比率_赤字"] = data["years"][0]["value"]
+        return data_dict
+    
+    def get_subsidies_status(self) -> dict:
+        data_dict = {}
+        # 表彰企業数
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/industry/subsidies-status/area?year=2020&matter=1",headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["表彰企業数"] = result_dict["result"]["data"]
+        # 補助金件数
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/industry/subsidies-status/area?year=2020&matter=2",headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["補助金件数"] = result_dict["result"]["data"]
+        # 補助金金額
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/industry/subsidies-status/area?year=2020&matter=3",headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["補助金金額"] = result_dict["result"]["data"]
+        return data_dict
+    
+    def get_globalmarket(self) -> dict:
+        data_dict = {}
+        # 企業進出数
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/industry/globalmarket/perPref?year=2020&dispType=1&regionCode=-&countryCode=-&sicCode=-&simcCode=-",headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        data_dict["企業進出数"] = result_dict["result"]
+        return data_dict
+
+    def get_forSettlementAmount(self,pref_code,city_code) -> dict:
+        data_dict = {}
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/municipality/finance/forSettlementAmount?year=2020&prefCode={pref_code}&cityCode={city_code}&matter=1".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        for data in result_dict["result"]["years"][0]["data"]:
+            key = "目的別歳出決算額構成割合_" + data["label"]
+            data_dict[key] = data["value"]
+        return data_dict
+    
+    def get_taxes(self,pref_code,city_code) -> dict:
+        data_dict = {}
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/municipality/taxes/perYear?prefCode={pref_code}&cityCode={city_code}".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        for data in result_dict["result"]["data"]:
+            if 2020 == data["year"]:
+                data_dict["一人当たり地方税"] = data["value"]
+                break
+        return data_dict
+    
+    def get_residentTaxCorporate(self,pref_code,city_code) -> dict:
+        data_dict = {}
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/municipality/residentTaxCorporate/perYear?cityCode={city_code}".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        for data in result_dict["result"]["data"]:
+            if 2020 == data["year"]:
+                data_dict["一人当たり市町村民税法人分"] = data["value"]
+                break
+        return data_dict
+    
+    def get_propertyTax(self,pref_code,city_code) -> dict:
+        data_dict = {}
+        response = requests.get("https://opendata.resas-portal.go.jp/api/v1/municipality/propertyTax/perYear?cityCode={city_code}".format(
+            pref_code = pref_code,
+            city_code = city_code
+        ),headers=Const.HEADER)
+        result_dict = json.loads(response.content.decode())
+        for data in result_dict["result"]["data"]:
+            if 2020 == data["year"]:
+                data_dict["一人当たり固定資産税"] = data["value"]
+                break
+        return data_dict
 
     def main(self) -> None:
         """
@@ -464,12 +582,20 @@ class Main():
             # 全データ
             data_list = []
 
+            # 表彰・補助金採択_地域ごとの分布
+            self.logger.info("表彰・補助金採択_地域ごとの分布の取得")
+            subsidies_status_dict = self.get_subsidies_status()
+
+            # 海外への企業進出動向
+            self.logger.info("海外への企業進出動向の取得")
+            globalmarket_dict = self.get_globalmarket()
+
             # 都道府県の取得
             prefectures = self.get_prefectures()
             for prefecture in tqdm.tqdm(prefectures):
                 # スキップ
-                if int(prefecture["prefCode"]) < 40:
-                    continue
+                # if int(prefecture["prefCode"]) < 40:
+                #     continue
 
                 # 都道府県処理済フラグ
                 pref_processed_flg = False
@@ -507,8 +633,6 @@ class Main():
                     data_dict["生産年齢人口"] = adult_population_2020
                     data_dict["老年人口"] = old_population_2020
 
-                    # time.sleep(0.2)
-
                     # 人口増減率の取得
                     self.logger.info("人口増減率の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
                         pref_code = prefecture["prefCode"],
@@ -525,8 +649,6 @@ class Main():
                     data_dict["年少人口増加率"] = young_population_2020
                     data_dict["生産年齢人口増加率"] = adult_population_2020
                     data_dict["老年人口増加率"] = old_population_2020
-
-                    # time.sleep(0.2)
 
                     # 出生数／死亡数／転入数／転出数
                     self.logger.info("出生数／死亡数／転入数／転出数の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
@@ -551,7 +673,37 @@ class Main():
                     data_dict["転入数増加率"] = transfer_in_increase_rate
                     data_dict["転出数増加率"] = transfer_out_increase_rate
 
-                    # time.sleep(0.2)
+                    # 産業別特化係数
+                    self.logger.info("産業別特化係数の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    result_dict = self.get_industry_power(prefecture["prefCode"],city["cityCode"])
+                    data_dict.update(result_dict)
+
+                    # 創業比率
+                    self.logger.info("創業比率の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    result_dict = self.get_municipality(prefecture["prefCode"],city["cityCode"])
+                    data_dict.update(result_dict)
+
+                    # 黒字赤字企業比率
+                    self.logger.info("黒字赤字企業比率の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    result_dict = self.get_municipality_surplus(prefecture["prefCode"],city["cityCode"])
+                    data_dict.update(result_dict)
+
+                    # 表彰・補助金採択_地域ごとの分布
+                    data_dict["表彰・補助金採択_地域ごとの分布_表彰企業数"] = subsidies_status_dict["表彰企業数"][str(prefecture["prefCode"])]
+                    data_dict["表彰・補助金採択_地域ごとの分布_補助金件数"] = subsidies_status_dict["補助金件数"][str(prefecture["prefCode"])]
+                    data_dict["表彰・補助金採択_地域ごとの分布_補助金金額"] = subsidies_status_dict["補助金金額"][str(prefecture["prefCode"])]
+
+                    # 海外への企業進出動向
+                    data_dict["海外への企業進出動向_企業進出数"] = globalmarket_dict["企業進出数"][str(prefecture["prefCode"])]
 
                     # 就職者数・進学者数の推移
                     self.logger.info("就職者数・進学者数の推移の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
@@ -568,8 +720,6 @@ class Main():
                             continue
                     data_dict.update(employ_education)
 
-                    # time.sleep(0.2)
-
                     # # 不動産取引価格
                     # self.logger.info("不動産取引価格の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
                     #     pref_code = prefecture["prefCode"],
@@ -583,8 +733,6 @@ class Main():
                     #     ))
                     #     continue
                     # data_dict.update(data_dict_temp)
-
-                    # time.sleep(0.2)
 
                     # 求人・求職者
                     self.logger.info("求人・求職者の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
@@ -601,12 +749,45 @@ class Main():
                             continue
                     data_dict.update(regional_employ)
 
-                    # time.sleep(0.2)
+                    # 目的別歳出決算額構成割合
+                    self.logger.info("目的別歳出決算額構成割合の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    result_dict = self.get_forSettlementAmount(prefecture["prefCode"],city["cityCode"])
+                    data_dict.update(result_dict)
+
+                    # 一人当たり地方税
+                    self.logger.info("一人当たり地方税の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    result_dict = self.get_taxes(prefecture["prefCode"],city["cityCode"])
+                    data_dict.update(result_dict)
+
+                    # 一人当たり市町村民税法人分
+                    self.logger.info("一人当たり市町村民税法人分の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    result_dict = self.get_residentTaxCorporate(prefecture["prefCode"],city["cityCode"])
+                    data_dict.update(result_dict)
+
+                    # 一人当たり固定資産税
+                    self.logger.info("一人当たり固定資産税の取得 prefCode:[{pref_code}] cityCode:[{city_code}]".format(
+                        pref_code = prefecture["prefCode"],
+                        city_code = city["cityCode"]
+                    ))
+                    result_dict = self.get_propertyTax(prefecture["prefCode"],city["cityCode"])
+                    data_dict.update(result_dict)
                     
                     self.logger.info(data_dict)
                     data_list.append(data_dict)
 
                     pref_processed_flg = True
+
+                    break
+                break
 
         except CommonException as e:
             self.logger.error(str(e))
@@ -617,7 +798,7 @@ class Main():
             # pandas
             df = pd.DataFrame(data_list)
             # 保存
-            df.to_csv(os.path.join(os.path.dirname(__file__),self.config["CONST"]["CSV"]))
+            df.to_csv(os.path.join(os.path.dirname(__file__),self.config["CONST"]["CSV"]), encoding="cp932")
             # 終了ログ出力
             self.log.info_end()
 
