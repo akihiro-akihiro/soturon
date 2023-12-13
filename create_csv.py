@@ -41,10 +41,10 @@ class Const:
 
     # ヘッダ
     # HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
-    # HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
+    HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
     # HEADER = {"X-API-KEY": "iGv1mZo4iikWm0A7bYDMafGlADPoGHDZ5u6Z4a27"}
     # HEADER = {"X-API-KEY": "wv7DSpxzpObcBXH6TDslGRjzWPHFn3V3xGNR4ZHX"}
-    HEADER = {"X-API-KEY": "ELpUGSVz7Jobd3KE6Lu6t0cuYoitzjXrwQo81JYh"}
+    # HEADER = {"X-API-KEY": "ELpUGSVz7Jobd3KE6Lu6t0cuYoitzjXrwQo81JYh"}
 
     @classmethod
     def set_all(cls,config) -> None:
@@ -788,7 +788,7 @@ class Main():
             for prefecture in tqdm.tqdm(prefectures):
 
                 # スキップ
-                if int(prefecture["prefCode"]) < 19:
+                if int(prefecture["prefCode"]) < 46:
                     continue
 
                 # 都道府県処理済フラグ
@@ -826,7 +826,7 @@ class Main():
 
                     try:
                         # スキップ
-                        if int(city["cityCode"]) < 19211:
+                        if int(city["cityCode"]) < 46527:
                             continue
 
                         if "1" == city["bigCityFlag"]:
