@@ -41,9 +41,9 @@ class Const:
 
     # ヘッダ
     # HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
-    HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
+    # HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
     # HEADER = {"X-API-KEY": "iGv1mZo4iikWm0A7bYDMafGlADPoGHDZ5u6Z4a27"}
-    # HEADER = {"X-API-KEY": "wv7DSpxzpObcBXH6TDslGRjzWPHFn3V3xGNR4ZHX"}
+    HEADER = {"X-API-KEY": "wv7DSpxzpObcBXH6TDslGRjzWPHFn3V3xGNR4ZHX"}
     # HEADER = {"X-API-KEY": "ELpUGSVz7Jobd3KE6Lu6t0cuYoitzjXrwQo81JYh"}
 
     @classmethod
@@ -768,10 +768,16 @@ class Main():
 
         メインの処理を記述します。
         """
-        try:
-            # 開始ログ出力
-            self.log.info_start()
+        # 開始ログ出力
+        self.log.info_start()
 
+        try:
+            # CSV読み込み
+            old_df = pd.read_csv(os.path.join(os.path.dirname(__file__),self.config["CONST"]["CSV"]), encoding="cp932")
+        except:
+            old_df = pd.DataFrame()
+
+        try:
             # 全データ
             data_list = []
 
@@ -787,8 +793,9 @@ class Main():
             prefectures = self.get_prefectures()
             for prefecture in tqdm.tqdm(prefectures):
 
-                # スキップ
-                if int(prefecture["prefCode"]) < 46:
+                # 最大都道府県
+                max_pref = max(old_df["prefCode"])
+                if prefecture["prefCode"] < max_pref:
                     continue
 
                 # 都道府県処理済フラグ
@@ -825,9 +832,13 @@ class Main():
                 for city in tqdm.tqdm(cities):
 
                     try:
-                        # スキップ
-                        if int(city["cityCode"]) < 46527:
-                            continue
+                        try:
+                            # old_df に既にあればスキップ
+                            if 0 != len(old_df[(int(prefecture["prefCode"]) == old_df["prefCode"]) & (int(city["cityCode"]) == old_df["cityCode"])]):
+                                continue
+                        except KeyError:
+                            # キーがない場合は処理続行
+                            pass
 
                         if "1" == city["bigCityFlag"]:
                             # bigCityFlag = 1 なら除く
@@ -835,7 +846,9 @@ class Main():
 
                         # 辞書データの作成
                         data_dict = {}
+                        data_dict["prefCode"] = prefecture["prefCode"]
                         data_dict["都道府県"] = prefecture["prefName"]
+                        data_dict["cityCode"] = city["cityCode"]
                         data_dict["都市"] = city["cityName"]
 
                         # 人口の取得
@@ -1061,7 +1074,14 @@ class Main():
                         result_dict = self.get_propertyTax(prefecture["prefCode"],city["cityCode"])
                         data_dict.update(result_dict)
                         
+                        # 全データのログ
                         self.logger.info(data_dict)
+
+                        if len(data_dict) < 120:
+                            self.logger.warning("120項目に満たないためスキップします。")
+                            continue
+
+                        # データをリストに追加
                         data_list.append(data_dict)
 
                         pref_processed_flg = True
@@ -1076,9 +1096,11 @@ class Main():
             self.logger.error(Const.LOG_STR_UNEXPECTED_ERROR)
         finally:
             # pandas
-            df = pd.DataFrame(data_list)
+            new_df = pd.DataFrame(data_list)
+            # データ連結
+            csv_df = pd.concat([old_df, new_df])
             # 保存
-            df.to_csv(os.path.join(os.path.dirname(__file__),self.config["CONST"]["CSV"]), encoding="cp932")
+            csv_df.to_csv(os.path.join(os.path.dirname(__file__),self.config["CONST"]["CSV"]), index=False, encoding="cp932")
             # 終了ログ出力
             self.log.info_end()
 
