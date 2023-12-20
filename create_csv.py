@@ -40,10 +40,10 @@ class Const:
     LOG_STR_UNEXPECTED_ERROR = "意図しない例外が発生しました。システム担当者に問い合わせてください。"
 
     # ヘッダ
-    # HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
+    HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
     # HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
     # HEADER = {"X-API-KEY": "iGv1mZo4iikWm0A7bYDMafGlADPoGHDZ5u6Z4a27"}
-    HEADER = {"X-API-KEY": "wv7DSpxzpObcBXH6TDslGRjzWPHFn3V3xGNR4ZHX"}
+    # HEADER = {"X-API-KEY": "wv7DSpxzpObcBXH6TDslGRjzWPHFn3V3xGNR4ZHX"}
     # HEADER = {"X-API-KEY": "ELpUGSVz7Jobd3KE6Lu6t0cuYoitzjXrwQo81JYh"}
 
     @classmethod
