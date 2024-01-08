@@ -40,10 +40,10 @@ class Const:
     LOG_STR_UNEXPECTED_ERROR = "意図しない例外が発生しました。システム担当者に問い合わせてください。"
 
     # ヘッダ
-    HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
+    # HEADER = {"X-API-KEY": "ECTu55GCQDvoCKLigXeCkddbVSQbxEeHQesjrVpw"}
     # HEADER = {"X-API-KEY": "QtaImN0UL4H4eidsFdcTUL90Q44iRB5PbGW8GaRX"}
     # HEADER = {"X-API-KEY": "iGv1mZo4iikWm0A7bYDMafGlADPoGHDZ5u6Z4a27"}
-    # HEADER = {"X-API-KEY": "wv7DSpxzpObcBXH6TDslGRjzWPHFn3V3xGNR4ZHX"}
+    HEADER = {"X-API-KEY": "wv7DSpxzpObcBXH6TDslGRjzWPHFn3V3xGNR4ZHX"}
     # HEADER = {"X-API-KEY": "ELpUGSVz7Jobd3KE6Lu6t0cuYoitzjXrwQo81JYh"}
 
     @classmethod
@@ -200,6 +200,9 @@ class Main():
         # 転出数
         transfer_out = None
 
+        # 2015年
+        birth_2015 = None
+
         # 2015～2020年 増加率
         # 出生数
         birth_increase_rate = None
@@ -211,7 +214,7 @@ class Main():
         transfer_out_increase_rate = None
 
         if None == result_dict["result"]:
-            return birth, death, transfer_in, transfer_out, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate
+            return birth, death, transfer_in, transfer_out, birth_2015, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate
 
         data_list = result_dict["result"]["data"]
         for data in data_list:
@@ -234,7 +237,6 @@ class Main():
                         transfer_out_increase_rate = transfer_out / self.zero_to_one(transfer_out_2015)
                         break
             if "出生数" == data["label"]:
-                birth_2015 = None
                 for t in data["data"]:
                     if 2015 == t["year"]:
                         birth_2015 = t["value"]
@@ -252,7 +254,7 @@ class Main():
                         death_increase_rate = death / self.zero_to_one(death_2015)
                         break
 
-        return birth, death, transfer_in, transfer_out, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate
+        return birth, death, transfer_in, transfer_out, birth_2015, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate
 
     def get_employ_education(self,pref_code) -> dict:
         def get_2020(result_dict):
@@ -794,7 +796,10 @@ class Main():
             for prefecture in tqdm.tqdm(prefectures):
 
                 # 最大都道府県
-                max_pref = max(old_df["prefCode"])
+                try:
+                    max_pref = max(old_df["prefCode"])
+                except:
+                    max_pref = 0
                 if prefecture["prefCode"] < max_pref:
                     continue
 
@@ -891,9 +896,9 @@ class Main():
                             pref_code = prefecture["prefCode"],
                             city_code = city["cityCode"]
                         ))
-                        birth, death, transfer_in, transfer_out, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate =\
+                        birth, death, transfer_in, transfer_out, birth_2015, birth_increase_rate, death_increase_rate, transfer_in_increase_rate, transfer_out_increase_rate =\
                             self.get_population_estimate(prefecture["prefCode"], city["cityCode"])
-                        if None == birth or None == death or None == transfer_in or None == transfer_out or\
+                        if None == birth or None == death or None == transfer_in or None == transfer_out or None == birth_2015 or\
                             None == birth_increase_rate or None == death_increase_rate or None == transfer_in_increase_rate or None == transfer_out_increase_rate:
                             self.logger.warning("データが存在しません。prefCode:[{pref_code}] cityCode:[{city_code}]".format(
                                 pref_code = prefecture["prefCode"],
@@ -904,6 +909,7 @@ class Main():
                         data_dict["死亡数"] = death
                         data_dict["転入数"] = transfer_in
                         data_dict["転出数"] = transfer_out
+                        data_dict["出生数2015"] = birth_2015
                         data_dict["出生数増加率"] = birth_increase_rate
                         data_dict["死亡数増加率"] = death_increase_rate
                         data_dict["転入数増加率"] = transfer_in_increase_rate
